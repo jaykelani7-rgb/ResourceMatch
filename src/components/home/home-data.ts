@@ -2,160 +2,158 @@ export type Opportunity = {
   id: string;
   title: string;
   ngo: string;
-  category: string;
   location: string;
-  dateLabel: string;
-  schedule: string;
-  commitment: string;
+  category: "Health" | "Education" | "Relief" | "Logistics" | "Community";
+  date: string;
+  commitment: "One day" | "Weekend" | "Flexible" | "Ongoing";
+  mode: "On-site" | "Hybrid";
+  spots: number;
   summary: string;
-  mode: "On-site" | "Hybrid" | "Remote";
 };
+
+export const homeStats = [
+  { label: "Volunteer hours coordinated", value: "58,400+" },
+  { label: "Verified NGO partners", value: "126" },
+  { label: "Average assignment confirmation", value: "under 6 hrs" },
+] as const;
+
+export const howItWorks = [
+  {
+    step: "01",
+    title: "Create a trusted profile",
+    description:
+      "Volunteers share only the essentials: contact, availability, skills, and preferred causes.",
+  },
+  {
+    step: "02",
+    title: "Browse the right opportunities",
+    description:
+      "Search live, verified NGO requests by cause, location, and commitment without getting lost in menus.",
+  },
+  {
+    step: "03",
+    title: "Confirm and coordinate",
+    description:
+      "Review the fit, connect with the NGO, and move into the assignment flow with clear next steps.",
+  },
+] as const;
 
 export const opportunities: Opportunity[] = [
   {
-    id: "opp-flood-relief",
-    title: "Flood Relief Logistics Volunteer",
-    ngo: "Seva Response Network",
-    category: "Disaster Relief",
-    location: "Chennai",
-    dateLabel: "Apr 27",
-    schedule: "This week",
-    commitment: "4 hours",
-    summary:
-      "Help sort incoming supplies, label emergency kits, and support field dispatch teams.",
-    mode: "On-site",
-  },
-  {
-    id: "opp-school-mentor",
-    title: "Weekend Learning Mentor",
-    ngo: "Udaan Learning Trust",
-    category: "Education",
+    id: "opp-1",
+    title: "Medical camp registration support",
+    ngo: "Swasthya Collective",
     location: "Bengaluru",
-    dateLabel: "May 03",
-    schedule: "Next 2 weeks",
-    commitment: "2 hours",
-    summary:
-      "Guide middle-school learners through reading practice and confidence-building activities.",
-    mode: "Hybrid",
-  },
-  {
-    id: "opp-clinic-support",
-    title: "Mobile Clinic Registration Support",
-    ngo: "Swasthya Saathi",
     category: "Health",
-    location: "Hyderabad",
-    dateLabel: "Apr 29",
-    schedule: "This week",
-    commitment: "3 hours",
-    summary:
-      "Assist patients at intake desks, confirm visit details, and keep care queues moving smoothly.",
+    date: "May 2, 2026",
+    commitment: "Weekend",
     mode: "On-site",
+    spots: 12,
+    summary:
+      "Support registration, queue handling, and multilingual guidance during a neighborhood screening drive.",
   },
   {
-    id: "opp-tree-drive",
-    title: "Community Tree Drive Coordinator",
-    ngo: "Green Steps Collective",
-    category: "Environment",
-    location: "Pune",
-    dateLabel: "May 10",
-    schedule: "This month",
-    commitment: "5 hours",
-    summary:
-      "Support volunteer check-in, route planning, and sapling distribution for neighborhood drives.",
+    id: "opp-2",
+    title: "School readiness kit distribution",
+    ngo: "Learning Bridge Trust",
+    location: "Chennai",
+    category: "Education",
+    date: "May 5, 2026",
+    commitment: "One day",
     mode: "On-site",
-  },
-  {
-    id: "opp-helpline",
-    title: "Volunteer Helpline Listener",
-    ngo: "Sahaara Connect",
-    category: "Community Care",
-    location: "Remote",
-    dateLabel: "Rolling",
-    schedule: "Flexible",
-    commitment: "90 minutes",
+    spots: 18,
     summary:
-      "Offer calm first-response support and route callers to the right NGO or field coordinator.",
-    mode: "Remote",
+      "Help assemble and distribute school starter kits while guiding caregivers through the pickup flow.",
   },
   {
-    id: "opp-food-bank",
-    title: "Food Bank Packing Buddy",
-    ngo: "Meals for All",
-    category: "Hunger Relief",
+    id: "opp-3",
+    title: "Flood relief inventory tracking",
+    ngo: "Harbor Relief Network",
+    location: "Kochi",
+    category: "Relief",
+    date: "May 7, 2026",
+    commitment: "Flexible",
+    mode: "Hybrid",
+    spots: 6,
+    summary:
+      "Coordinate incoming supplies, validate manifests, and support dispatch updates during a live relief response.",
+  },
+  {
+    id: "opp-4",
+    title: "Warehouse dispatch coordination",
+    ngo: "RouteHope Foundation",
     location: "Mumbai",
-    dateLabel: "Apr 30",
-    schedule: "This week",
-    commitment: "3 hours",
-    summary:
-      "Pack dry ration kits, verify counts, and prepare labeled deliveries for nearby families.",
+    category: "Logistics",
+    date: "May 10, 2026",
+    commitment: "Ongoing",
     mode: "On-site",
-  },
-];
-
-export const processSteps = [
-  {
-    title: "Sign Up",
-    description:
-      "Share only the essentials like name, contact details, and availability in a short mobile-first flow.",
+    spots: 9,
+    summary:
+      "Assist with route planning, packing verification, and outbound resource labeling for high-volume deliveries.",
   },
   {
-    title: "Browse",
-    description:
-      "Search vetted opportunities by cause, location, or date without losing your place on the page.",
+    id: "opp-5",
+    title: "Community kitchen volunteer shift",
+    ngo: "Seva Kitchens",
+    location: "Delhi",
+    category: "Community",
+    date: "May 12, 2026",
+    commitment: "Weekend",
+    mode: "On-site",
+    spots: 14,
+    summary:
+      "Prepare and serve meals, manage family pickup lines, and help keep intake and cleanup moving smoothly.",
   },
   {
-    title: "Match",
-    description:
-      "Get connected to a role that fits your time, skills, and language comfort level.",
+    id: "opp-6",
+    title: "After-school mentoring circle",
+    ngo: "Bright Futures Initiative",
+    location: "Pune",
+    category: "Education",
+    date: "May 15, 2026",
+    commitment: "Ongoing",
+    mode: "Hybrid",
+    spots: 10,
+    summary:
+      "Mentor middle-school learners in reading and confidence-building sessions with structured lesson prompts.",
   },
-  {
-    title: "Show Up",
-    description:
-      "Receive clear instructions, buddy details, and shift context before you head out.",
-  },
-];
-
-export const impactMetrics = [
-  { value: "520+", label: "Volunteer shifts completed" },
-  { value: "54", label: "NGO partners onboarded" },
-  { value: "18 cities", label: "Active across response hubs" },
-  { value: "94%", label: "Volunteers who return for another shift" },
-];
+] as const;
 
 export const testimonials = [
   {
     quote:
-      "I found a weekend role in under five minutes, and the instructions were clear enough that I could help on my very first day.",
-    name: "Nisha, volunteer",
+      "The new flow makes it obvious what to do next. I could find a relevant shift on my phone in under two minutes.",
+    name: "Asha Menon",
+    role: "Volunteer, Bengaluru",
   },
   {
     quote:
-      "The filtered dashboard helped our team recruit exactly the kind of field support we needed without endless phone calls.",
-    name: "Arjun, NGO coordinator",
+      "We finally have a front door that feels trustworthy enough for both local volunteers and corporate sponsors.",
+    name: "Rahul Verma",
+    role: "NGO Coordinator, Mumbai",
   },
-];
+] as const;
 
-export const onboardingCards = [
+export const onboardingPanels = [
   {
-    title: "Volunteer Sign Up",
+    title: "Volunteer sign up",
     description:
-      "A guided, multi-step flow that asks only for essentials such as name, contact, cause preferences, and availability.",
-    fields: ["Name", "Contact", "Availability", "Cause interests"],
-    cta: "Join as volunteer",
+      "Create a concise profile, add your skills and availability, and start browsing verified opportunities.",
     href: "/auth",
+    cta: "Sign up to volunteer",
   },
   {
-    title: "NGO Onboarding",
+    title: "NGO and coordinator access",
     description:
-      "A concise organization setup for verified teams who want to publish needs, manage volunteers, and track impact.",
-    fields: ["Organization", "Coordinator", "Location", "Active needs"],
-    cta: "Create NGO account",
-    href: "/auth",
+      "Launch command workflows, review reported needs, and manage teams from a clearer operations dashboard.",
+    href: "/command-center",
+    cta: "Open coordinator tools",
   },
-];
-
-export const contactLinks = [
-  { label: "Email", value: "hello@resourcematch.org" },
-  { label: "WhatsApp", value: "+91 90000 12345" },
-  { label: "Support", value: "Mon-Sat, 8 AM - 8 PM" },
-];
+  {
+    title: "CSR impact workspace",
+    description:
+      "Track verified needs, allocate funds confidently, and generate board-ready impact documentation.",
+    href: "/csr-impact",
+    cta: "View impact portal",
+  },
+] as const;

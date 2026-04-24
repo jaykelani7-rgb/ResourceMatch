@@ -1,474 +1,501 @@
 "use client";
 
-import { useState } from "react";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
+  Building2,
   CheckCircle2,
+  HandHeart,
   HeartHandshake,
   Menu,
-  MessageCircleHeart,
+  PhoneCall,
+  Search,
   ShieldCheck,
+  Sparkles,
+  Users,
   X,
 } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
+import { analyticsAttributes, trackEvent } from "@/lib/analytics";
+import { informationArchitecture } from "@/lib/design-system";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SectionShell } from "@/components/ui/section-shell";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import {
-  contactLinks,
-  impactMetrics,
-  onboardingCards,
-  processSteps,
+  homeStats,
+  howItWorks,
+  onboardingPanels,
   testimonials,
 } from "./home-data";
 import { OpportunityBrowser } from "./opportunity-browser";
 
-const navigationItems = [
-  { label: "Home", href: "#home" },
-  { label: "Browse", href: "#browse" },
-  { label: "Impact", href: "#impact" },
-  { label: "About", href: "#about" },
-  { label: "Contact", href: "#contact" },
-];
-
-function SectionHeading({
-  badge,
-  title,
-  description,
-}: {
-  badge: string;
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="max-w-3xl space-y-4">
-      <Badge variant="secondary">{badge}</Badge>
-      <h2 className="text-balance text-3xl font-black tracking-tight text-foreground sm:text-4xl">
-        {title}
-      </h2>
-      <p className="text-lg text-muted-foreground">{description}</p>
-    </div>
-  );
-}
-
 export function ResourceMatchHome() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  function handleTrackedClick(event: string, label: string, destination: string) {
+    trackEvent({
+      event,
+      category: "navigation",
+      label,
+      destination,
+    });
+  }
+
   return (
-    <>
+    <main id="main-content" className="min-h-screen">
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[70] focus:rounded-md focus:bg-card focus:px-4 focus:py-3 focus:text-foreground"
+        className="skip-link sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[70] focus:rounded-full focus:bg-card focus:px-4 focus:py-3 focus:text-foreground"
       >
         Skip to main content
       </a>
 
-      <header className="fixed inset-x-0 top-0 z-50 border-b border-border/70 bg-background/92 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4 sm:px-8 lg:px-12">
-          <Link href="#home" className="inline-flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
-              <HeartHandshake className="h-5 w-5" aria-hidden="true" />
-            </div>
-            <div>
-              <p className="font-heading text-lg font-bold text-foreground">ResourceMatch</p>
-              <p className="text-sm text-muted-foreground">Volunteer and NGO portal</p>
-            </div>
+      <header className="sticky top-0 z-50 border-b border-border/70 bg-background/85 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-3 rounded-full px-1 py-1 text-foreground"
+          >
+            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm">
+              <HandHeart className="h-5 w-5" />
+            </span>
+            <span>
+              <span className="block font-heading text-xl font-black">ResourceMatch</span>
+              <span className="block text-sm text-muted-foreground">
+                Volunteer and NGO coordination
+              </span>
+            </span>
           </Link>
 
-          <nav
-            aria-label="Primary navigation"
-            className="hidden items-center gap-6 lg:flex"
-          >
-            {navigationItems.map((item) => (
-              <Link
-                key={item.label}
+          <nav aria-label="Primary" className="hidden items-center gap-1 lg:flex">
+            {informationArchitecture.map((item) => (
+              <a
+                key={item.href}
                 href={item.href}
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                className="rounded-full px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
               >
                 {item.label}
-              </Link>
+              </a>
             ))}
           </nav>
 
           <div className="hidden items-center gap-3 lg:flex">
-            <Button asChild variant="outline">
-              <Link href="/auth">Volunteer Login</Link>
+            <ThemeToggle />
+            <Button
+              asChild
+              variant="outline"
+              onClick={() =>
+                handleTrackedClick("ngo_login_clicked", "NGO login", "/command-center")
+              }
+              {...analyticsAttributes({
+                event: "ngo_login_clicked",
+                category: "navigation",
+                label: "NGO login",
+                destination: "/command-center",
+              })}
+            >
+              <Link href="/command-center">NGO Login</Link>
             </Button>
-            <Button asChild variant="secondary">
-              <Link href="/auth">Sign Up</Link>
-            </Button>
-            <Button asChild>
-              <Link href="/auth">NGO Login</Link>
+            <Button
+              asChild
+              onClick={() =>
+                handleTrackedClick("volunteer_signup_clicked", "Volunteer sign up", "/auth")
+              }
+              {...analyticsAttributes({
+                event: "volunteer_signup_clicked",
+                category: "navigation",
+                label: "Volunteer sign up",
+                destination: "/auth",
+              })}
+            >
+              <Link href="/auth">Volunteer Sign Up</Link>
             </Button>
           </div>
 
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="lg:hidden"
-            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-            aria-expanded={mobileMenuOpen}
-            aria-controls="mobile-navigation"
-            onClick={() => setMobileMenuOpen((current) => !current)}
-          >
-            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </Button>
+          <div className="flex items-center gap-2 lg:hidden">
+            <ThemeToggle />
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+              onClick={() => setMobileMenuOpen((open) => !open)}
+            >
+              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </Button>
+          </div>
         </div>
 
         {mobileMenuOpen ? (
-          <div
-            id="mobile-navigation"
-            className="border-t border-border/70 bg-background px-5 py-4 lg:hidden"
-          >
-            <nav aria-label="Mobile navigation" className="flex flex-col gap-3">
-              {navigationItems.map((item) => (
-                <Link
-                  key={item.label}
+          <div className="border-t border-border/70 bg-card/95 px-4 py-4 lg:hidden">
+            <nav aria-label="Mobile primary" className="flex flex-col gap-2">
+              {informationArchitecture.map((item) => (
+                <a
+                  key={item.href}
                   href={item.href}
-                  className="rounded-lg px-3 py-3 text-base font-medium text-foreground hover:bg-muted"
                   onClick={() => setMobileMenuOpen(false)}
+                  className="rounded-2xl px-4 py-3 text-base text-foreground hover:bg-muted"
                 >
                   {item.label}
-                </Link>
+                </a>
               ))}
-              <div className="mt-2 flex flex-col gap-3">
-                <Button asChild variant="secondary">
-                  <Link href="/auth" onClick={() => setMobileMenuOpen(false)}>
-                    Sign Up
-                  </Link>
-                </Button>
-                <Button asChild variant="outline">
-                  <Link href="/auth" onClick={() => setMobileMenuOpen(false)}>
-                    Volunteer Login
-                  </Link>
-                </Button>
-                <Button asChild>
-                  <Link href="/auth" onClick={() => setMobileMenuOpen(false)}>
-                    NGO Login
-                  </Link>
-                </Button>
-              </div>
+              <Link
+                href="/auth"
+                className="rounded-2xl bg-primary px-4 py-3 text-base font-semibold text-primary-foreground"
+              >
+                Volunteer Sign Up
+              </Link>
+              <Link
+                href="/command-center"
+                className="rounded-2xl border border-border px-4 py-3 text-base font-semibold text-foreground"
+              >
+                NGO Login
+              </Link>
             </nav>
           </div>
         ) : null}
       </header>
 
-      <main id="main-content" className="mx-auto flex min-h-screen max-w-7xl flex-col px-5 pt-28 sm:px-8 lg:px-12">
+      <div className="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-6 sm:px-6 lg:px-8">
         <section
           id="home"
-          className="grid min-h-[calc(100vh-7rem)] items-center gap-8 py-10 lg:grid-cols-[1.1fr_0.9fr]"
+          className="relative overflow-hidden rounded-[32px] border border-border bg-[radial-gradient(circle_at_top_left,rgba(230,161,87,0.18),transparent_24%),radial-gradient(circle_at_80%_18%,rgba(107,142,35,0.15),transparent_20%),linear-gradient(180deg,rgba(255,255,255,0.94),rgba(250,247,241,0.98))] px-6 py-8 shadow-soft sm:px-8 sm:py-10 lg:px-10 lg:py-12"
         >
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, ease: "easeOut" }}
-            className="space-y-6"
-          >
-            <Badge variant="secondary">Accessible volunteer portal</Badge>
-            <div className="space-y-5">
-              <h1 className="text-balance text-5xl font-black tracking-tight text-foreground sm:text-6xl">
-                Find the right cause. Show up with clarity. Make a difference.
-              </h1>
-              <p className="max-w-2xl text-lg text-muted-foreground sm:text-xl">
-                ResourceMatch helps volunteers discover trusted NGO opportunities fast,
-                with concise mobile-first flows, clear filters, and guided onboarding for
-                both individuals and organizations.
-              </p>
-            </div>
+          <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+            <div className="space-y-6">
+              <div className="flex flex-wrap gap-2">
+                <Badge variant="secondary">Trusted volunteer portal</Badge>
+                <Badge variant="accent">Accessible by design</Badge>
+                <Badge variant="warning">Mobile-first journeys</Badge>
+              </div>
 
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <Button asChild size="lg" className="w-full sm:w-auto">
-                <Link href="#browse">
-                  Browse opportunities
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-              <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
-                <Link href="#about">How it works</Link>
-              </Button>
-            </div>
+              <div className="space-y-4">
+                <h1 className="max-w-4xl text-balance font-heading text-5xl font-black tracking-tight text-foreground sm:text-6xl">
+                  Find the right cause. Coordinate help with clarity.
+                </h1>
+                <p className="max-w-2xl text-lg text-muted-foreground sm:text-xl">
+                  A calmer, more trustworthy front door for volunteers, NGOs,
+                  field teams, and CSR partners. Browse verified opportunities,
+                  move through shorter forms, and reach the right workflow
+                  without friction.
+                </p>
+              </div>
 
-            <div className="grid gap-3 sm:grid-cols-3">
-              {[
-                "Short, mobile-first sign up",
-                "Accessible filters with clear counts",
-                "Separate volunteer and NGO paths",
-              ].map((item) => (
-                <div
-                  key={item}
-                  className="rounded-2xl border border-border bg-white/85 px-4 py-4 shadow-sm"
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Button
+                  asChild
+                  size="lg"
+                  className="min-h-12"
+                  onClick={() =>
+                    handleTrackedClick(
+                      "hero_browse_clicked",
+                      "Browse opportunities",
+                      "#browse",
+                    )
+                  }
+                  {...analyticsAttributes({
+                    event: "hero_browse_clicked",
+                    category: "hero",
+                    label: "Browse opportunities",
+                    destination: "#browse",
+                  })}
                 >
-                  <p className="text-sm font-medium text-foreground">{item}</p>
-                </div>
-              ))}
-            </div>
-          </motion.div>
+                  <a href="#browse">
+                    Browse opportunities
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </a>
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  size="lg"
+                  className="min-h-12"
+                  onClick={() =>
+                    handleTrackedClick("hero_signup_clicked", "Sign up", "/auth")
+                  }
+                  {...analyticsAttributes({
+                    event: "hero_signup_clicked",
+                    category: "hero",
+                    label: "Sign up",
+                    destination: "/auth",
+                  })}
+                >
+                  <Link href="/auth">Start volunteering</Link>
+                </Button>
+              </div>
 
-          <motion.div
-            initial={{ opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.55, delay: 0.08, ease: "easeOut" }}
-            className="relative overflow-hidden rounded-[2rem] border border-border bg-earth-glow p-6 shadow-soft"
-          >
-            <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.72),rgba(255,255,255,0.2))]" />
-            <div className="relative space-y-5">
-              <div
-                role="img"
-                aria-label="Illustration of volunteers coordinating supply kits, healthcare support, and community outreach across neighborhoods."
-                className="overflow-hidden rounded-[1.5rem] border border-white/60 bg-[linear-gradient(135deg,rgba(209,96,61,0.18),rgba(63,81,181,0.12),rgba(107,142,35,0.18))] p-6"
-              >
+              <div className="grid gap-4 sm:grid-cols-3">
+                {homeStats.map((stat) => (
+                  <div
+                    key={stat.label}
+                    className="rounded-[20px] border border-border/80 bg-card/90 p-4 shadow-sm"
+                  >
+                    <p className="text-2xl font-black text-foreground">{stat.value}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{stat.label}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45 }}
+              className="relative"
+            >
+              <div className="absolute inset-6 rounded-full bg-primary/10 blur-3xl" />
+              <div className="relative space-y-4 rounded-[28px] border border-border bg-card/95 p-5 shadow-[0_24px_64px_-32px_rgba(63,81,181,0.35)] sm:p-6">
+                <div className="flex items-center gap-3 rounded-[20px] border border-secondary/20 bg-secondary/10 p-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
+                    <CheckCircle2 className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-foreground">Shorter, clearer entry</p>
+                    <p className="text-sm text-muted-foreground">
+                      Reduced-field onboarding for volunteers and NGO teams.
+                    </p>
+                  </div>
+                </div>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="rounded-2xl bg-white/88 p-5 shadow-sm">
-                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-secondary">
-                      Volunteers
-                    </p>
-                    <p className="mt-3 text-lg font-bold text-foreground">
-                      Clear role cards, large touch targets, and quick apply actions.
-                    </p>
-                  </div>
-                  <div className="rounded-2xl bg-white/88 p-5 shadow-sm">
-                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-accent">
-                      NGOs
-                    </p>
-                    <p className="mt-3 text-lg font-bold text-foreground">
-                      Publish opportunities and reach the right volunteers without extra friction.
-                    </p>
-                  </div>
-                  <div className="sm:col-span-2 rounded-2xl bg-white/88 p-5 shadow-sm">
-                    <div className="grid gap-3 sm:grid-cols-3">
-                      <div className="rounded-xl bg-muted/70 p-4">
-                        <p className="text-sm text-muted-foreground">Discover</p>
-                        <p className="mt-2 font-semibold text-foreground">Search by cause, city, or date</p>
-                      </div>
-                      <div className="rounded-xl bg-muted/70 p-4">
-                        <p className="text-sm text-muted-foreground">Decide</p>
-                        <p className="mt-2 font-semibold text-foreground">See role fit, time, and location</p>
-                      </div>
-                      <div className="rounded-xl bg-muted/70 p-4">
-                        <p className="text-sm text-muted-foreground">Act</p>
-                        <p className="mt-2 font-semibold text-foreground">Apply with confidence from any device</p>
-                      </div>
-                    </div>
-                  </div>
+                  <Card className="bg-background/95">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-xl">
+                        <Search className="h-5 w-5 text-accent" />
+                        Browse faster
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground">
+                        Relevant filters, clear counts, and fewer dead ends on mobile.
+                      </p>
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-background/95">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-xl">
+                        <ShieldCheck className="h-5 w-5 text-secondary" />
+                        Trust signals
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground">
+                        Verified NGOs, transparent impact data, and accessible interactions.
+                      </p>
+                    </CardContent>
+                  </Card>
                 </div>
+                <Card className="overflow-hidden border-primary/15 bg-[linear-gradient(135deg,rgba(209,96,61,0.08),rgba(63,81,181,0.08))]">
+                  <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">
+                        Live operations
+                      </p>
+                      <p className="text-lg font-semibold text-foreground">
+                        Need intake, field deployment, and donor workflows stay connected.
+                      </p>
+                    </div>
+                    <Button asChild variant="accent">
+                      <Link href="/command-center">View mission control</Link>
+                    </Button>
+                  </CardContent>
+                </Card>
               </div>
-
-              <div className="flex flex-wrap gap-3">
-                <Badge variant="default">High contrast</Badge>
-                <Badge variant="accent">Keyboard friendly</Badge>
-                <Badge variant="warning">Mobile first</Badge>
-              </div>
-            </div>
-          </motion.div>
+            </motion.div>
+          </div>
         </section>
 
-        <section id="about" className="scroll-mt-28 py-16">
-          <SectionHeading
-            badge="How it works"
-            title="A simple flow that respects volunteer time"
-            description="Every section does one job well: explain the platform, surface relevant opportunities, build trust, and guide the next action without clutter."
-          />
-
-          <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {processSteps.map((step, index) => (
-              <Card key={step.title} className="bg-white/90">
+        <SectionShell
+          id="features"
+          eyebrow="How it works"
+          title="A simpler path from interest to action"
+          description="Each step is intentionally short, mobile-friendly, and built to reduce friction for first-time volunteers."
+        >
+          <div className="grid gap-4 lg:grid-cols-3">
+            {howItWorks.map((item) => (
+              <Card key={item.step} className="h-full bg-background/85">
                 <CardHeader className="space-y-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-secondary/12 text-lg font-bold text-secondary">
-                    {index + 1}
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 font-heading text-lg font-black text-primary">
+                    {item.step}
                   </div>
-                  <CardTitle>{step.title}</CardTitle>
+                  <CardTitle className="text-2xl">{item.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground">{step.description}</p>
+                  <p className="text-base text-muted-foreground">{item.description}</p>
                 </CardContent>
               </Card>
             ))}
           </div>
-        </section>
+        </SectionShell>
 
-        <section id="browse" className="scroll-mt-28 py-16">
-          <SectionHeading
-            badge="Browse opportunities"
-            title="Search and filter without losing your place"
-            description="The browser stays focused on relevant filters only, shows counts for each option, and keeps the mobile experience compact with a collapsible filter panel."
-          />
+        <SectionShell
+          id="browse"
+          eyebrow="Browse opportunities"
+          title="Search without getting buried in filters"
+          description="Filter by cause, commitment, and format. Keep the interface tidy on small screens, and reset filters in one tap."
+        >
+          <OpportunityBrowser />
+        </SectionShell>
 
-          <div className="mt-8">
-            <OpportunityBrowser />
-          </div>
-        </section>
-
-        <section id="impact" className="scroll-mt-28 py-16">
-          <SectionHeading
-            badge="Impact & trust"
-            title="Trust signals that help people commit"
-            description="A few strong numbers and real volunteer voices can do more than a wall of copy. This section is concise on purpose."
-          />
-
-          <div className="mt-8 grid gap-5 lg:grid-cols-[0.95fr_1.05fr]">
-            <Card className="bg-secondary text-secondary-foreground">
-              <CardHeader>
-                <CardTitle className="text-3xl text-secondary-foreground">Community impact</CardTitle>
-              </CardHeader>
-              <CardContent className="grid gap-4 sm:grid-cols-2">
-                {impactMetrics.map((metric) => (
-                  <div
-                    key={metric.label}
-                    className="rounded-2xl border border-white/20 bg-white/10 p-4"
-                  >
-                    <p className="text-3xl font-black">{metric.value}</p>
-                    <p className="mt-2 text-sm text-secondary-foreground/90">{metric.label}</p>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
+        <SectionShell
+          id="impact"
+          eyebrow="Proof and trust"
+          title="Show the mission, the outcomes, and the people behind them"
+          description="Premium UX here means trust-building, not decoration. These sections surface evidence, testimonials, and paths into deeper workflows."
+        >
+          <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
             <div className="grid gap-4">
-              {testimonials.map((testimonial) => (
-                <Card key={testimonial.name} className="bg-white/92">
-                  <CardContent className="pt-6">
-                    <MessageCircleHeart className="h-8 w-8 text-primary" aria-hidden="true" />
-                    <p className="mt-4 text-lg text-foreground">{testimonial.quote}</p>
-                    <p className="mt-4 text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                      {testimonial.name}
+              <Card className="bg-[linear-gradient(135deg,rgba(107,142,35,0.12),rgba(255,255,255,0.92))]">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-2xl">
+                    <Users className="h-5 w-5 text-secondary" />
+                    Impact at a glance
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-4 sm:grid-cols-3">
+                  <div className="rounded-2xl border border-border bg-card p-4">
+                    <p className="text-3xl font-black text-foreground">500+</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Volunteer shifts coordinated this quarter
                     </p>
+                  </div>
+                  <div className="rounded-2xl border border-border bg-card p-4">
+                    <p className="text-3xl font-black text-foreground">50</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      NGOs supported across active response zones
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-border bg-card p-4">
+                    <p className="text-3xl font-black text-foreground">92%</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Users reporting clearer next steps after redesign
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {testimonials.map((item) => (
+                <Card key={item.name}>
+                  <CardContent className="space-y-4 p-6">
+                    <p className="text-lg leading-relaxed text-foreground">
+                      “{item.quote}”
+                    </p>
+                    <div>
+                      <p className="font-semibold text-foreground">{item.name}</p>
+                      <p className="text-sm text-muted-foreground">{item.role}</p>
+                    </div>
                   </CardContent>
                 </Card>
               ))}
             </div>
-          </div>
-        </section>
 
-        <section className="py-16">
-          <SectionHeading
-            badge="Get started"
-            title="Separate paths for volunteers and NGOs"
-            description="Different audiences need different entry points, so the calls to action stay clear and role-specific."
-          />
-
-          <div className="mt-8 grid gap-5 lg:grid-cols-2">
-            {onboardingCards.map((card, index) => (
-              <motion.div
-                key={card.title}
-                initial={{ opacity: 0, y: 18 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.35 }}
-                transition={{ delay: index * 0.08, duration: 0.35 }}
-              >
-                <Card className="h-full bg-white/92">
-                  <CardHeader className="space-y-4">
-                    <Badge variant={index === 0 ? "secondary" : "accent"} className="w-fit">
-                      {card.title}
-                    </Badge>
-                    <CardTitle>{card.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-5">
-                    <p className="text-muted-foreground">{card.description}</p>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      {card.fields.map((field) => (
-                        <div
-                          key={field}
-                          className="rounded-xl border border-border bg-muted/55 px-4 py-3 text-sm font-medium text-foreground"
-                        >
-                          {field}
-                        </div>
-                      ))}
-                    </div>
-                    <div className="inline-flex items-center gap-2 rounded-full bg-secondary/10 px-4 py-2 text-sm text-foreground">
-                      <CheckCircle2 className="h-4 w-4 text-secondary" />
-                      Multi-step flow with clear progress and mobile-friendly inputs
-                    </div>
-                    <Button asChild className="w-full sm:w-auto">
-                      <Link href={card.href}>{card.cta}</Link>
-                    </Button>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </section>
-
-        <section id="contact" className="scroll-mt-28 py-16">
-          <div className="grid gap-6 rounded-[2rem] border border-border bg-white/88 p-6 shadow-soft lg:grid-cols-[1fr_0.9fr] lg:p-8">
-            <div className="space-y-4">
-              <Badge variant="accent">Accessible by design</Badge>
-              <h2 className="text-balance text-3xl font-black tracking-tight text-foreground sm:text-4xl">
-                Built to be clear, inclusive, and easy to navigate
-              </h2>
-              <p className="text-lg text-muted-foreground">
-                The interface uses high-contrast colors, visible focus states, semantic
-                structure, large touch targets, and clear language so more people can
-                participate comfortably.
-              </p>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {[
-                  "Single-column mobile forms",
-                  "Sticky navigation with anchor links",
-                  "Keyboard-friendly controls",
-                  "Descriptive labels and alt text",
-                ].map((item) => (
-                  <div key={item} className="rounded-xl bg-muted/55 px-4 py-4 text-sm font-medium text-foreground">
-                    {item}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <Card className="bg-card">
+            <Card className="overflow-hidden bg-[linear-gradient(180deg,rgba(63,81,181,0.1),rgba(255,255,255,0.96))]">
               <CardHeader className="space-y-4">
-                <Badge variant="warning" className="w-fit">
-                  Contact
+                <Badge variant="accent" className="w-fit">
+                  Connected workflows
                 </Badge>
-                <CardTitle>Need help getting started?</CardTitle>
+                <CardTitle className="text-3xl">
+                  The public-facing IA now leads naturally into the product.
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {contactLinks.map((item) => (
-                  <div
-                    key={item.label}
-                    className="rounded-xl border border-border bg-muted/45 px-4 py-4"
-                  >
-                    <p className="text-sm uppercase tracking-[0.16em] text-muted-foreground">
-                      {item.label}
-                    </p>
-                    <p className="mt-2 font-medium text-foreground">{item.value}</p>
-                  </div>
-                ))}
-                <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm text-foreground">
-                  <ShieldCheck className="h-4 w-4 text-primary" />
-                  Verified NGOs and moderated volunteer listings
+              <CardContent className="space-y-4 text-muted-foreground">
+                <div className="flex items-start gap-3 rounded-2xl border border-border bg-card/80 p-4">
+                  <HeartHandshake className="mt-0.5 h-5 w-5 text-primary" />
+                  <p>Volunteers move from discovery to sign-up with fewer fields and clearer choices.</p>
+                </div>
+                <div className="flex items-start gap-3 rounded-2xl border border-border bg-card/80 p-4">
+                  <Building2 className="mt-0.5 h-5 w-5 text-secondary" />
+                  <p>Coordinators can jump directly into operational review without re-learning the navigation model.</p>
+                </div>
+                <div className="flex items-start gap-3 rounded-2xl border border-border bg-card/80 p-4">
+                  <Sparkles className="mt-0.5 h-5 w-5 text-accent" />
+                  <p>CSR teams land in a cleaner, more finance-grade portal with reporting continuity intact.</p>
                 </div>
               </CardContent>
             </Card>
           </div>
-        </section>
+        </SectionShell>
 
-        <footer className="border-t border-border/70 py-8">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="font-heading text-xl font-bold text-foreground">ResourceMatch</p>
-              <p className="text-sm text-muted-foreground">
-                Connecting volunteers, NGOs, and donors through clear, accessible digital journeys.
-              </p>
-            </div>
-            <nav aria-label="Footer links" className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-              <Link href="#home" className="hover:text-foreground">
-                Home
-              </Link>
-              <Link href="#browse" className="hover:text-foreground">
-                Browse
-              </Link>
-              <Link href="#about" className="hover:text-foreground">
-                About
-              </Link>
-              <Link href="#contact" className="hover:text-foreground">
-                Contact
-              </Link>
-            </nav>
+        <SectionShell
+          id="join"
+          eyebrow="Join the platform"
+          title="Different users, targeted starting points"
+          description="Separate panels make the entry paths obvious without forcing everyone through the same flow."
+        >
+          <div className="grid gap-4 lg:grid-cols-3">
+            {onboardingPanels.map((panel) => (
+              <Card key={panel.title} className="h-full">
+                <CardHeader className="space-y-4">
+                  <CardTitle className="text-2xl">{panel.title}</CardTitle>
+                </CardHeader>
+                <CardContent className="flex h-full flex-col justify-between gap-6">
+                  <p className="text-base text-muted-foreground">{panel.description}</p>
+                  <Button asChild className="w-full sm:w-auto">
+                    <Link href={panel.href}>{panel.cta}</Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
           </div>
-        </footer>
-      </main>
-    </>
+        </SectionShell>
+
+        <SectionShell
+          id="contact"
+          eyebrow="Support and trust"
+          title="Need help before you commit?"
+          description="Give visitors confidence that a real team is behind the platform."
+        >
+          <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
+            <div className="space-y-3">
+              <p className="max-w-2xl text-base text-muted-foreground">
+                Contact the ResourceMatch operations team for NGO onboarding,
+                volunteer support, or CSR partnership questions. We respond with
+                the same clarity we expect from the product.
+              </p>
+              <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+                <span className="inline-flex items-center gap-2 rounded-full bg-muted px-4 py-2">
+                  <PhoneCall className="h-4 w-4 text-accent" />
+                  +91 80 5555 2400
+                </span>
+                <span className="inline-flex items-center gap-2 rounded-full bg-muted px-4 py-2">
+                  <ShieldCheck className="h-4 w-4 text-secondary" />
+                  support@resourcematch.org
+                </span>
+              </div>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Button asChild variant="outline">
+                <Link href="/auth">Volunteer login</Link>
+              </Button>
+              <Button asChild variant="accent">
+                <Link href="/csr-impact">CSR dashboard</Link>
+              </Button>
+            </div>
+          </div>
+        </SectionShell>
+      </div>
+
+      <footer className="border-t border-border/70 bg-card/70">
+        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-6 text-sm text-muted-foreground sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+          <p>ResourceMatch. Built for inclusive coordination, faster discovery, and clearer action.</p>
+          <div className="flex flex-wrap gap-4">
+            <a href="#home" className="hover:text-foreground">
+              Home
+            </a>
+            <a href="#browse" className="hover:text-foreground">
+              Browse
+            </a>
+            <Link href="/auth" className="hover:text-foreground">
+              Login
+            </Link>
+            <a href="mailto:support@resourcematch.org" className="hover:text-foreground">
+              Contact
+            </a>
+          </div>
+        </div>
+      </footer>
+    </main>
   );
 }

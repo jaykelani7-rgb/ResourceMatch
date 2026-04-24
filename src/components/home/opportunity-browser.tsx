@@ -1,8 +1,9 @@
 "use client";
 
-import { useDeferredValue, useState } from "react";
-import { Filter, MapPin, Search } from "lucide-react";
-import Link from "next/link";
+import { AnimatePresence, motion } from "framer-motion";
+import { Filter, MapPin, Search, SlidersHorizontal, X } from "lucide-react";
+import { useDeferredValue, useMemo, useState } from "react";
+import { analyticsAttributes, trackEvent } from "@/lib/analytics";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,322 +11,296 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { opportunities, type Opportunity } from "./home-data";
 
-type Filters = {
-  category: string;
-  location: string;
-  schedule: string;
-};
+type CategoryFilter = Opportunity["category"] | "All";
+type ModeFilter = Opportunity["mode"] | "All";
+type CommitmentFilter = Opportunity["commitment"] | "All";
 
-const allValue = "All";
+const categoryOptions: CategoryFilter[] = [
+  "All",
+  "Health",
+  "Education",
+  "Relief",
+  "Logistics",
+  "Community",
+];
 
-const matchesFilters = (
-  opportunity: Opportunity,
-  searchTerm: string,
-  filters: Filters,
-  ignoreKey?: keyof Filters,
-) => {
-  const normalizedSearch = searchTerm.trim().toLowerCase();
-  const matchesSearch =
-    normalizedSearch.length === 0 ||
-    [opportunity.title, opportunity.ngo, opportunity.summary, opportunity.location]
-      .join(" ")
-      .toLowerCase()
-      .includes(normalizedSearch);
+const modeOptions: ModeFilter[] = ["All", "On-site", "Hybrid"];
+const commitmentOptions: CommitmentFilter[] = [
+  "All",
+  "One day",
+  "Weekend",
+  "Flexible",
+  "Ongoing",
+];
 
-  const matchesCategory =
-    ignoreKey === "category" ||
-    filters.category === allValue ||
-    opportunity.category === filters.category;
-  const matchesLocation =
-    ignoreKey === "location" ||
-    filters.location === allValue ||
-    opportunity.location === filters.location;
-  const matchesSchedule =
-    ignoreKey === "schedule" ||
-    filters.schedule === allValue ||
-    opportunity.schedule === filters.schedule;
+function filterCount<T extends string>(
+  items: Opportunity[],
+  getValue: (item: Opportunity) => T,
+  value: T | "All",
+) {
+  if (value === "All") {
+    return items.length;
+  }
 
-  return matchesSearch && matchesCategory && matchesLocation && matchesSchedule;
-};
+  return items.filter((item) => getValue(item) === value).length;
+}
+
+function FilterGroup<T extends string>({
+  title,
+  options,
+  selected,
+  onSelect,
+  countFor,
+}: {
+  title: string;
+  options: readonly T[];
+  selected: T;
+  onSelect: (value: T) => void;
+  countFor: (value: T) => number;
+}) {
+  return (
+    <div className="space-y-3">
+      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+        {title}
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {options.map((option) => {
+          const active = option === selected;
+
+          return (
+            <button
+              key={option}
+              type="button"
+              onClick={() => onSelect(option)}
+              className={cn(
+                "inline-flex min-h-11 items-center gap-2 rounded-full border px-4 py-2 text-sm transition-all duration-200 focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2",
+                active
+                  ? "border-accent bg-accent/10 text-accent"
+                  : "border-border bg-background text-foreground hover:border-accent/50 hover:bg-accent/5",
+              )}
+            >
+              <span>{option}</span>
+              <span className="rounded-full bg-card px-2 py-0.5 text-xs text-muted-foreground">
+                {countFor(option)}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 export function OpportunityBrowser() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filters, setFilters] = useState<Filters>({
-    category: allValue,
-    location: allValue,
-    schedule: allValue,
-  });
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [category, setCategory] = useState<CategoryFilter>("All");
+  const [mode, setMode] = useState<ModeFilter>("All");
+  const [commitment, setCommitment] = useState<CommitmentFilter>("All");
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const deferredQuery = useDeferredValue(query);
 
-  const deferredSearchTerm = useDeferredValue(searchTerm);
-  const categories = Array.from(new Set(opportunities.map((item) => item.category)));
-  const locations = Array.from(new Set(opportunities.map((item) => item.location)));
-  const schedules = Array.from(new Set(opportunities.map((item) => item.schedule)));
+  const filtered = useMemo(() => {
+    const normalized = deferredQuery.trim().toLowerCase();
 
-  const filteredOpportunities = opportunities.filter((opportunity) =>
-    matchesFilters(opportunity, deferredSearchTerm, filters),
-  );
+    return opportunities.filter((item) => {
+      const matchesQuery =
+        !normalized ||
+        [item.title, item.ngo, item.location, item.summary, item.category]
+          .join(" ")
+          .toLowerCase()
+          .includes(normalized);
+      const matchesCategory = category === "All" || item.category === category;
+      const matchesMode = mode === "All" || item.mode === mode;
+      const matchesCommitment =
+        commitment === "All" || item.commitment === commitment;
 
-  const hasActiveFilters =
-    searchTerm.trim().length > 0 ||
-    filters.category !== allValue ||
-    filters.location !== allValue ||
-    filters.schedule !== allValue;
-
-  const clearFilters = () => {
-    setSearchTerm("");
-    setFilters({
-      category: allValue,
-      location: allValue,
-      schedule: allValue,
+      return matchesQuery && matchesCategory && matchesMode && matchesCommitment;
     });
-  };
+  }, [category, commitment, deferredQuery, mode]);
 
-  const renderOptionLabel = (
-    option: string,
-    filterKey: keyof Filters,
-    optionsFilters: Filters,
-  ) => {
-    const count = opportunities.filter((opportunity) => {
-      if (option === allValue) {
-        return matchesFilters(opportunity, deferredSearchTerm, optionsFilters, filterKey);
-      }
+  function clearFilters() {
+    setQuery("");
+    setCategory("All");
+    setMode("All");
+    setCommitment("All");
+  }
 
-      return (
-        matchesFilters(opportunity, deferredSearchTerm, optionsFilters, filterKey) &&
-        opportunity[filterKey] === option
-      );
-    }).length;
-
-    return `${option} (${count})`;
-  };
-
-  return (
-    <div className="grid gap-5 lg:grid-cols-[320px_minmax(0,1fr)]">
-      <div className="lg:hidden">
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full justify-between"
-          aria-expanded={filtersOpen}
-          aria-controls="opportunity-filters"
-          onClick={() => setFiltersOpen((current) => !current)}
+  const filters = (
+    <div className="space-y-5 rounded-[24px] border border-border bg-card p-5 shadow-sm">
+      <div className="space-y-2">
+        <label
+          htmlFor="opportunity-search"
+          className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground"
         >
-          <span className="inline-flex items-center gap-2">
-            <Filter className="h-4 w-4" />
-            Filters
-          </span>
-          <span className="text-sm text-muted-foreground">
-            {filteredOpportunities.length} results
-          </span>
-        </Button>
+          Search opportunities
+        </label>
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            id="opportunity-search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            className="pl-11"
+            placeholder="Search by cause, NGO, or location"
+          />
+        </div>
       </div>
 
-      <aside
-        id="opportunity-filters"
-        className={cn(
-          "space-y-4 lg:block",
-          filtersOpen ? "block" : "hidden",
-        )}
-      >
-        <Card className="bg-white/90">
-          <CardHeader className="space-y-3">
-            <Badge variant="secondary" className="w-fit">
-              Search & filter
-            </Badge>
-            <CardTitle className="text-2xl">Find a role that fits</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <label htmlFor="opportunity-search" className="text-sm font-medium text-foreground">
-                Search opportunities
-              </label>
-              <div className="relative">
-                <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="opportunity-search"
-                  value={searchTerm}
-                  onChange={(event) => setSearchTerm(event.target.value)}
-                  placeholder="Cause, NGO, or city"
-                  className="pl-11"
-                />
-              </div>
-            </div>
+      <FilterGroup
+        title="Cause"
+        options={categoryOptions}
+        selected={category}
+        onSelect={setCategory}
+        countFor={(value) => filterCount(opportunities, (item) => item.category, value)}
+      />
+      <FilterGroup
+        title="Mode"
+        options={modeOptions}
+        selected={mode}
+        onSelect={setMode}
+        countFor={(value) => filterCount(opportunities, (item) => item.mode, value)}
+      />
+      <FilterGroup
+        title="Commitment"
+        options={commitmentOptions}
+        selected={commitment}
+        onSelect={setCommitment}
+        countFor={(value) => filterCount(opportunities, (item) => item.commitment, value)}
+      />
 
-            <div className="space-y-2">
-              <label htmlFor="category-filter" className="text-sm font-medium text-foreground">
-                Cause
-              </label>
-              <select
-                id="category-filter"
-                value={filters.category}
-                onChange={(event) =>
-                  setFilters((current) => ({ ...current, category: event.target.value }))
-                }
-                className="flex h-12 w-full rounded-lg border border-input bg-card px-4 py-3 text-base text-foreground shadow-sm transition-all duration-200 focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-              >
-                {[allValue, ...categories].map((category) => (
-                  <option key={category} value={category}>
-                    {renderOptionLabel(category, "category", filters)}
-                  </option>
-                ))}
-              </select>
-            </div>
+      <Button type="button" variant="outline" onClick={clearFilters} className="w-full">
+        Clear filters
+      </Button>
+    </div>
+  );
 
-            <div className="space-y-2">
-              <label htmlFor="location-filter" className="text-sm font-medium text-foreground">
-                Location
-              </label>
-              <select
-                id="location-filter"
-                value={filters.location}
-                onChange={(event) =>
-                  setFilters((current) => ({ ...current, location: event.target.value }))
-                }
-                className="flex h-12 w-full rounded-lg border border-input bg-card px-4 py-3 text-base text-foreground shadow-sm transition-all duration-200 focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-              >
-                {[allValue, ...locations].map((location) => (
-                  <option key={location} value={location}>
-                    {renderOptionLabel(location, "location", filters)}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="schedule-filter" className="text-sm font-medium text-foreground">
-                Availability
-              </label>
-              <select
-                id="schedule-filter"
-                value={filters.schedule}
-                onChange={(event) =>
-                  setFilters((current) => ({ ...current, schedule: event.target.value }))
-                }
-                className="flex h-12 w-full rounded-lg border border-input bg-card px-4 py-3 text-base text-foreground shadow-sm transition-all duration-200 focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-              >
-                {[allValue, ...schedules].map((schedule) => (
-                  <option key={schedule} value={schedule}>
-                    {renderOptionLabel(schedule, "schedule", filters)}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="flex flex-col gap-3">
-              <p className="rounded-lg bg-muted/45 px-4 py-3 text-sm text-muted-foreground">
-                Results update instantly as you type or change a filter.
-              </p>
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                onClick={clearFilters}
-                disabled={!hasActiveFilters}
-              >
-                Clear filters
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </aside>
+  return (
+    <div className="grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
+      <div className="hidden xl:block">{filters}</div>
 
       <div className="space-y-4">
-        <div className="flex flex-col gap-3 rounded-2xl border border-border bg-white/85 px-5 py-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">Opportunity browser</p>
-            <h3 className="text-2xl font-bold text-foreground">
-              {filteredOpportunities.length} opportunities ready to explore
-            </h3>
-          </div>
-          {hasActiveFilters ? (
-            <div className="flex flex-wrap gap-2">
-              {searchTerm.trim().length > 0 ? (
-                <Badge variant="accent">Search: {searchTerm.trim()}</Badge>
-              ) : null}
-              {filters.category !== allValue ? (
-                <Badge variant="secondary">{filters.category}</Badge>
-              ) : null}
-              {filters.location !== allValue ? (
-                <Badge variant="default">{filters.location}</Badge>
-              ) : null}
-              {filters.schedule !== allValue ? (
-                <Badge variant="warning">{filters.schedule}</Badge>
-              ) : null}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              Start with a keyword or choose a few filters.
+        <div className="flex flex-col gap-3 rounded-[24px] border border-border bg-card/90 p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-1">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+              Results
             </p>
-          )}
+            <p className="text-lg font-semibold text-foreground">
+              {filtered.length} opportunities available
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="xl:hidden"
+              onClick={() => setMobileFiltersOpen((open) => !open)}
+            >
+              <SlidersHorizontal className="mr-2 h-4 w-4" />
+              Filters
+            </Button>
+            {(query || category !== "All" || mode !== "All" || commitment !== "All") && (
+              <Button type="button" variant="ghost" onClick={clearFilters}>
+                <X className="mr-2 h-4 w-4" />
+                Reset all
+              </Button>
+            )}
+          </div>
         </div>
 
-        {filteredOpportunities.length === 0 ? (
-          <Card className="bg-white/92">
-            <CardContent className="flex flex-col items-start gap-4 pt-6">
-              <Badge variant="warning">No exact match</Badge>
-              <div className="space-y-2">
-                <h4 className="text-2xl font-bold text-foreground">
-                  Try clearing a filter or broadening your search
-                </h4>
-                <p className="max-w-2xl text-muted-foreground">
-                  We kept your place in the results so you can adjust one filter at a time
-                  without losing context.
-                </p>
-              </div>
-              <Button type="button" variant="outline" onClick={clearFilters}>
-                Reset all filters
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-4 xl:grid-cols-2">
-            {filteredOpportunities.map((opportunity) => (
-              <Card key={opportunity.id} className="bg-white/92">
-                <CardHeader className="space-y-4">
+        <AnimatePresence initial={false}>
+          {mobileFiltersOpen ? (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="xl:hidden"
+            >
+              {filters}
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+
+        <div className="grid gap-4">
+          {filtered.map((opportunity) => (
+            <Card key={opportunity.id} className="overflow-hidden">
+              <CardHeader className="gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="space-y-3">
                   <div className="flex flex-wrap gap-2">
                     <Badge variant="secondary">{opportunity.category}</Badge>
-                    <Badge variant="accent">{opportunity.mode}</Badge>
+                    <Badge variant="accent">{opportunity.commitment}</Badge>
+                    <Badge variant="info">{opportunity.mode}</Badge>
                   </div>
                   <div className="space-y-2">
-                    <CardTitle>{opportunity.title}</CardTitle>
-                    <p className="text-base text-muted-foreground">{opportunity.summary}</p>
+                    <CardTitle className="text-2xl">{opportunity.title}</CardTitle>
+                    <p className="text-base text-muted-foreground">{opportunity.ngo}</p>
                   </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid gap-3 text-sm text-muted-foreground sm:grid-cols-2">
-                    <div className="rounded-lg bg-muted/55 p-3">
-                      <p className="font-medium text-foreground">{opportunity.ngo}</p>
-                      <p>Partner NGO</p>
-                    </div>
-                    <div className="rounded-lg bg-muted/55 p-3">
-                      <p className="font-medium text-foreground">{opportunity.commitment}</p>
-                      <p>Time needed</p>
-                    </div>
-                    <div className="rounded-lg bg-muted/55 p-3">
-                      <p className="font-medium text-foreground">{opportunity.dateLabel}</p>
-                      <p>Start date</p>
-                    </div>
-                    <div className="rounded-lg bg-muted/55 p-3">
-                      <p className="font-medium text-foreground">{opportunity.schedule}</p>
-                      <p>Availability</p>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
-                      <MapPin className="h-4 w-4 text-primary" />
-                      {opportunity.location}
-                    </div>
-                    <Button asChild className="w-full sm:w-auto">
-                      <Link href="/auth">Apply</Link>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+                </div>
+                <div className="rounded-2xl border border-border bg-background px-4 py-3 text-sm text-muted-foreground">
+                  <p className="font-semibold text-foreground">{opportunity.date}</p>
+                  <p>{opportunity.spots} spots open</p>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                  <span className="inline-flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-accent" />
+                    {opportunity.location}
+                  </span>
+                  <span className="inline-flex items-center gap-2">
+                    <Filter className="h-4 w-4 text-secondary" />
+                    {opportunity.commitment}
+                  </span>
+                </div>
+                <p className="max-w-3xl text-base text-foreground/90">
+                  {opportunity.summary}
+                </p>
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <Button
+                    asChild
+                    onClick={() =>
+                      trackEvent({
+                        event: "opportunity_apply_clicked",
+                        category: "volunteer",
+                        label: opportunity.title,
+                        destination: "/auth",
+                      })
+                    }
+                    {...analyticsAttributes({
+                      event: "opportunity_apply_clicked",
+                      category: "volunteer",
+                      label: opportunity.title,
+                      destination: "/auth",
+                    })}
+                  >
+                    <a href="/auth">Apply now</a>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="outline"
+                    onClick={() =>
+                      trackEvent({
+                        event: "opportunity_learn_more_clicked",
+                        category: "volunteer",
+                        label: opportunity.title,
+                        destination: "/volunteer",
+                      })
+                    }
+                    {...analyticsAttributes({
+                      event: "opportunity_learn_more_clicked",
+                      category: "volunteer",
+                      label: opportunity.title,
+                      destination: "/volunteer",
+                    })}
+                  >
+                    <a href="/volunteer">Preview volunteer flow</a>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     </div>
   );
